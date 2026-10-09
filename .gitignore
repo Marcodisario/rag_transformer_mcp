@@ -4,5 +4,3 @@ __pycache__/
 .venv/
 .env
 .cache/
-experimentos/*.jsonl
-experimentos/*.jsonl.eval.json

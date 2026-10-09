@@ -5,6 +5,3 @@ torch
 mcp>=1.24,<2
 openai
 openai-agents
-langchain
-langchain-openai
-langchain-mcp-adapters
