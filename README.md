@@ -69,6 +69,22 @@ La lista de llamadas y nombres sugeridos está en `experimentos/inspector/README
 python atencion/test_atencion.py atencion.py
 ```
 
+## Alternativa con Docker en Windows
+
+Si Windows Application Control bloquea las DLL de PyTorch dentro de `.venv`, no se debe desactivar esa protección. Con Docker Desktop iniciado, construir una vez la imagen Linux:
+
+```cmd
+docker build -t rag-transformer-mcp .
+```
+
+Luego se puede ejecutar cada benchmark montando el repositorio actual. El volumen `rag-hf-cache` conserva el modelo descargado entre corridas:
+
+```cmd
+docker run --rm --env-file .env -v "%cd%:/app" -v rag-hf-cache:/root/.cache/huggingface -w /app rag-transformer-mcp sh -lc "python api/servidor.py & python agente.py --preguntas datos/preguntas_agente_dev.jsonl --salida respuestas.jsonl --log experimentos/agente-dev.md"
+```
+
+El archivo `.dockerignore` permite copiar a la imagen solamente `Dockerfile` y `requirements.txt`; `.env` no forma parte de la imagen.
+
 ## Prueba rápida sin credenciales
 
 ```bash
