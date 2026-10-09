@@ -33,14 +33,16 @@ El agente usa `deepseek/deepseek-v4-flash-0731` mediante OpenRouter y el SDK de 
 
 ### Benchmark
 
-La corrida final debe ejecutarse con una clave de OpenRouter con saldo:
+La corrida final se ejecutó sobre las 12 preguntas `dev` y se evaluó con el juez fijado por la cátedra:
 
 ```bash
 python agente.py --preguntas datos/preguntas_agente_dev.jsonl --salida respuestas.jsonl --log experimentos/agente-dev.md
 python evaluar/evaluar.py agente --preguntas datos/preguntas_agente_dev.jsonl --respuestas respuestas.jsonl
 ```
 
-Al cerrar esta versión no había una `OPENROUTER_API_KEY` configurada, por lo que no se inventan resultados del juez ni costos. Después de la corrida, copiar aquí el resumen de `respuestas.jsonl.eval.json` y analizar en particular cualquier pregunta cuyo ruteo o puntaje sea menor al objetivo.
+El resultado fue ruteo `1,0`, context relevance `4,75`, faithfulness `5,0` y answer relevance `5,0`. El agente consumió 33.237 tokens de entrada y 3.024 de salida, con costo estimado de USD 0,00326484. El juez costó USD 0,02010.
+
+No hubo fallas de ruteo ni puntuaciones menores a 4. Los casos con context relevance 4 fueron A02, A11 y A12: en A02 se recuperó toda la preparación de colonoscopía junto con un fragmento breve sobre otro estudio; en A11 apareció inicialmente ruido sobre internación y convenios, pero el agente reformuló la búsqueda y obtuvo la documentación correcta; en A12 se recuperaron los requisitos generales, aunque faltaron detalles menores de identificación. En los tres casos, la respuesta final fue completamente fiel y relevante.
 
 ## Parte 3: servidor y agente MCP
 
@@ -50,10 +52,12 @@ Al cerrar esta versión no había una `OPENROUTER_API_KEY` configurada, por lo q
 
 | Variante | Ruteo | Context relevance | Faithfulness | Answer relevance | Costo agente | Costo juez |
 |---|---:|---:|---:|---:|---:|---:|
-| Herramientas locales | pendiente de corrida | pendiente | pendiente | pendiente | pendiente | pendiente |
-| Herramientas MCP | pendiente de corrida | pendiente | pendiente | pendiente | pendiente | pendiente |
+| Herramientas locales | 1,000 | 4,750 | 5,000 | 5,000 | USD 0,00326484 | USD 0,02010 |
+| Herramientas MCP | 1,000 | 4,583 | 5,000 | 4,750 | USD 0,00324352 | USD 0,01887 |
 
-Completar la tabla únicamente a partir de los dos `.eval.json` y de los totales de los logs. Si los resultados difieren, comparar por pregunta los nombres y argumentos de las herramientas, sus contextos y la cantidad de llamadas al modelo; el transporte por sí solo no cambia los datos del hospital.
+Ambas variantes alcanzaron ruteo perfecto y superaron 4 en las tres métricas. El agente MCP consumió 27.408 tokens de entrada y 3.355 de salida. Costó USD 0,00002132 menos como agente y USD 0,00123 menos en el juez, pero obtuvo 0,167 puntos menos de context relevance y 0,25 menos de answer relevance.
+
+La diferencia no provino de herramientas faltantes: el log MCP confirma que `tools/list` descubrió las seis y el ruteo fue perfecto. Se concentró en A11 y A12. En A11, la búsqueda documental MCP devolvió normas de internación y convenios en vez de los requisitos para una primera consulta; el modelo local detectó ese ruido y realizó una segunda búsqueda, mientras que el MCP se detuvo después de la primera. En A12, la consulta documental MCP recuperó información sobre una curva de glucosa y medicamentos de alto costo, pero no los requisitos generales de retiro. El agente se mantuvo fiel a esos contextos —faithfulness permaneció en 5—, aunque respondió de manera incompleta. Esto muestra variación en los argumentos y reintentos elegidos por el modelo, no una diferencia funcional del transporte MCP.
 
 La comprobación manual con MCP Inspector está documentada en `experimentos/inspector/README.md`. Las seis capturas deben guardarse en esa carpeta antes de entregar.
 
@@ -74,4 +78,4 @@ Esta parte no se completa digitalmente: la consigna exige cálculos manuscritos,
 
 ## Costo total
 
-Pendiente de las dos corridas de agente y sus evaluaciones. El total debe ser la suma del costo informado en ambos logs más el costo del juez de ambos `.eval.json`, contrastada con el dashboard de OpenRouter. No se informa `USD 0` porque todavía no se ejecutaron esas llamadas.
+Las dos corridas de agente costaron en conjunto USD 0,00650836 y las dos evaluaciones con juez USD 0,03897. El costo total calculado de las partes 2 y 3 fue **USD 0,04547836**. Antes de entregar se debe contrastar ese valor con el dashboard de actividad de OpenRouter; una diferencia pequeña puede deberse al redondeo o a llamadas de prueba realizadas con la misma clave.
